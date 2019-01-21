@@ -1,0 +1,6 @@
+#login-container {
+  padding: 5px; }
+  #login-container h1 {
+    color: #000; }
+  #login-container .login-top-spacing {
+    margin-top: 15px; }
