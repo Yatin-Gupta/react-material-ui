@@ -32,15 +32,18 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
   public state = {};
 
   private style = {
-    AddExerciseFabButton: {
+    borderWhite: {
+      border: '#fff'
+    },
+    mlAuto: {
       marginLeft: 'auto'
     },
-    Paper: {
+    paper: {
       height: '500px',
       overflowY: 'auto' as 'auto',
       padding: '20px'
     },
-    W100: {
+    w100: {
       width: '100%'
     }
   };
@@ -51,14 +54,11 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
     super(props);
 
     this.getExerciseByMuscles = this.getExerciseByMuscles.bind(this);
+    this.getLangSelectBox = this.getLangSelectBox.bind(this);
     this.getMuscleAndExerciseList = this.getMuscleAndExerciseList.bind(this);
     this.getMusclesMenuItems = this.getMusclesMenuItems.bind(this);
     this.getMusclesTabs = this.getMusclesTabs.bind(this);
 
-    this.getExerciseByMuscles();
-  }
-
-  public componentDidUpdate() {
     this.getExerciseByMuscles();
   }
 
@@ -68,8 +68,10 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
       isExerciseDialogOpened,
       onExerciseDialogClose,
       onExerciseFormFieldChange,
+      onLangChange,
       onOpenExerciseDialog,
-      selectedExercise
+      selectedExercise,
+      selectedLang
     } = this.props;
     return (
       <React.Fragment>
@@ -79,11 +81,25 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
               <Typography variant="h6" color="inherit">
                 Exercise Database
               </Typography>
+              {/* Lang Selector */}
+              <FormControl
+                style={{ ...this.style.mlAuto, ...this.style.borderWhite }}
+              >
+                <Select
+                  value={selectedLang}
+                  displayEmpty={true}
+                  name="lang"
+                  onChange={onLangChange}
+                >
+                  {this.getLangSelectBox()}
+                </Select>
+              </FormControl>
+
               <Fab
                 aria-label="Add"
                 color="default"
                 onClick={onOpenExerciseDialog}
-                style={this.style.AddExerciseFabButton}
+                style={this.style.mlAuto}
               >
                 <AddIcon />
               </Fab>
@@ -109,7 +125,7 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
                 onChange={onExerciseFormFieldChange}
                 value={inputExercise.title}
                 margin="normal"
-                style={this.style.W100}
+                style={this.style.w100}
               />
               <br />
               <TextField
@@ -121,10 +137,10 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
                 rowsMax="4"
                 value={inputExercise.description}
                 margin="normal"
-                style={this.style.W100}
+                style={this.style.w100}
               />
               <br />
-              <FormControl style={this.style.W100}>
+              <FormControl style={this.style.w100}>
                 <InputLabel htmlFor="exercise-muscle">Muscles</InputLabel>
                 <Select
                   value={inputExercise.muscles}
@@ -152,12 +168,12 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
         <section id="body">
           <Grid container={true}>
             <Grid item={true} sm={6}>
-              <Paper style={this.style.Paper}>
+              <Paper style={this.style.paper}>
                 {this.getMuscleAndExerciseList()}
               </Paper>
             </Grid>
             <Grid item={true} sm={6}>
-              <Paper style={this.style.Paper}>
+              <Paper style={this.style.paper}>
                 <Typography variant="h4" gutterBottom={true}>
                   {selectedExercise ? selectedExercise.title : 'Welcome'}
                 </Typography>
@@ -218,8 +234,19 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
     );
   }
 
+  private getLangSelectBox() {
+    return this.props.langs.map((lang: string) => {
+      return (
+        <MenuItem value={lang} key={lang}>
+          {lang}
+        </MenuItem>
+      );
+    });
+  }
+
   private getMuscleAndExerciseList() {
-    return this.props.selectedMuscles.map(muscle => (
+    this.getExerciseByMuscles();
+    const mappedResult = this.props.selectedMuscles.map(muscle => (
       <React.Fragment key={muscle}>
         <Typography variant="h6" color="inherit">
           {muscle.charAt(0).toUpperCase() + muscle.slice(1)}
@@ -227,6 +254,8 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
         <List component="nav">{this.getExerciseAsList(muscle)}</List>
       </React.Fragment>
     ));
+    console.log(mappedResult);
+    return mappedResult;
   }
 
   private getMusclesMenuItems() {
