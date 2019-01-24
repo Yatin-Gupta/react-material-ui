@@ -15,6 +15,7 @@ class MuiContainer extends React.Component<
 > {
   public state = {
     exercise: {} as IExerciseProps, // values that will be filled in exercise form
+    exerciseEditMode: false, // exercise edit mode
     lang: 'en', // lang in which page is operating
     openExerciseFormDialog: false // responsible for open/close of exercise form dialog
   };
@@ -22,7 +23,7 @@ class MuiContainer extends React.Component<
   private dataStore: { muscles: string[]; exercises: IExercise[] }; // Exercise and Muscles Data
   private langs: string[] = []; // Supported Langs
 
-  private selectedExercise: IExercise; // User selected exercise
+  private selectedExercise: IExercise | undefined; // User selected exercise
   private selectedTab: number = 0; // User selected muscle tab
   // User selected muscles
   // For All case there are more than 1 muscles, otherwise only 1 muscle in the array
@@ -36,6 +37,9 @@ class MuiContainer extends React.Component<
 
     // Binding functions with this to prevent implicit lost of this reference.
     this.addExerciseHandler = this.addExerciseHandler.bind(this);
+    this.deleteExercise = this.deleteExercise.bind(this);
+    this.disableEditMode = this.disableEditMode.bind(this);
+    this.editExerciseHandler = this.editExerciseHandler.bind(this);
     this.changeExerciseFormFieldHandler = this.changeExerciseFormFieldHandler.bind(
       this
     );
@@ -45,6 +49,7 @@ class MuiContainer extends React.Component<
     this.langChangeHandler = this.langChangeHandler.bind(this);
     this.listClickHandler = this.listClickHandler.bind(this);
     this.openExerciseFormDialog = this.openExerciseFormDialog.bind(this);
+    this.saveExerciseHandler = this.saveExerciseHandler.bind(this);
 
     // In constructor to set state we don't need to call setState.
     // Initialization code.
@@ -64,6 +69,7 @@ class MuiContainer extends React.Component<
     return (
       <MuiView
         exercises={this.dataStore.exercises}
+        exerciseEditMode={this.state.exerciseEditMode}
         inputExercise={this.state.exercise}
         isExerciseDialogOpened={this.state.openExerciseFormDialog}
         selectedExercise={this.selectedExercise}
@@ -74,11 +80,15 @@ class MuiContainer extends React.Component<
         muscles={this.dataStore.muscles}
         onExerciseDialogClose={this.handleDialogOnClose}
         onAdd={this.addExerciseHandler}
+        onEditExercise={this.editExerciseHandler}
+        onDeleteExercise={this.deleteExercise}
+        onDisableEditMode={this.disableEditMode}
         onExerciseFormFieldChange={this.changeExerciseFormFieldHandler}
         onTabChange={this.changeTabHandler}
         onLangChange={this.langChangeHandler}
         onListClick={this.listClickHandler}
         onOpenExerciseDialog={this.openExerciseFormDialog}
+        onSaveExercise={this.saveExerciseHandler}
       />
     );
   }
@@ -96,6 +106,29 @@ class MuiContainer extends React.Component<
     );
     this.dataStore = dataStore.getStore();
     this.handleDialogOnClose(e);
+  }
+
+  private disableEditMode() {
+    this.setState({ exerciseEditMode: false });
+  }
+
+  /*
+   * Input: Exercise ID
+   * Output: Edit Exercise Button Click Event
+   */
+  private editExerciseHandler(exerciseId: string) {
+    return (e: any) => {
+      // Filter exercise acc. to exercise Id.
+      const selectedExercise = this.dataStore.exercises.filter(exercise => {
+        return exercise.id === exerciseId;
+      });
+      if (selectedExercise && selectedExercise[0]) {
+        this.selectedExercise = selectedExercise[0];
+        const { id, ...populatedExercise } = { ...selectedExercise[0] };
+        // Set edit mode true and populate the form with values.
+        this.setState({ exercise: populatedExercise, exerciseEditMode: true });
+      }
+    };
   }
 
   /*
@@ -121,6 +154,21 @@ class MuiContainer extends React.Component<
     this.selectedTab = tabIndex;
     // To re-render the component
     this.setState({});
+  }
+
+  private deleteExercise(exerciseId: string) {
+    return (e: any) => {
+      const updatedExercises = this.dataStore.exercises.filter(
+        (exercise: IExercise) => {
+          return exercise.id !== exerciseId;
+        }
+      );
+      if (this.selectedExercise && this.selectedExercise.id === exerciseId) {
+        this.selectedExercise = undefined;
+      }
+      this.dataStore.exercises = updatedExercises;
+      this.setState({});
+    };
   }
 
   /*
@@ -169,7 +217,9 @@ class MuiContainer extends React.Component<
       if (this.selectedExercise) {
         const selectedExercise = this.dataStore.exercises.filter(
           (exercise: IExercise) => {
-            return exercise.id === this.selectedExercise.id;
+            return this.selectedExercise
+              ? exercise.id === this.selectedExercise.id
+              : false;
           }
         );
         if (selectedExercise && selectedExercise[0]) {
@@ -208,6 +258,29 @@ class MuiContainer extends React.Component<
   private openExerciseFormDialog(e: any) {
     this.initializeExercise();
     this.setState({ openExerciseFormDialog: true });
+  }
+
+  private saveExerciseHandler() {
+    return (e: any) => {
+      const exercisesWithNoId = this.dataStore.exercises.filter(
+        (exercise: IExercise) => {
+          return this.selectedExercise
+            ? exercise.id !== this.selectedExercise.id
+            : false;
+        }
+      );
+      const saveToExercises = exercisesWithNoId;
+      if (this.selectedExercise) {
+        const newExercise = {
+          id: this.selectedExercise.id,
+          ...this.state.exercise
+        };
+        this.selectedExercise = newExercise;
+        saveToExercises.push(newExercise);
+      }
+      this.dataStore.exercises = saveToExercises;
+      this.disableEditMode();
+    };
   }
 }
 

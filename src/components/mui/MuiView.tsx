@@ -11,22 +11,25 @@ import Fab from '@material-ui/core/Fab';
 import FormControl from '@material-ui/core/FormControl';
 
 import Grid from '@material-ui/core/Grid';
-import InputLabel from '@material-ui/core/InputLabel';
+import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
 import Select from '@material-ui/core/Select';
 import Tab from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
-import TextField from '@material-ui/core/TextField';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
 import AddIcon from '@material-ui/icons/Add';
+import CreateIcon from '@material-ui/icons/Create';
+import DeleteIcon from '@material-ui/icons/Delete';
 
 import { IExercise, IMuiViewProps, IMuiViewState } from './model';
+import ExerciseForm from './shared/ExerciseForm';
 
 class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
   public state = {};
@@ -54,6 +57,7 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
     super(props);
 
     this.getExerciseByMuscles = this.getExerciseByMuscles.bind(this);
+    this.getExerciseEditForm = this.getExerciseEditForm.bind(this);
     this.getLangSelectBox = this.getLangSelectBox.bind(this);
     this.getMuscleAndExerciseList = this.getMuscleAndExerciseList.bind(this);
     this.getMusclesMenuItems = this.getMusclesMenuItems.bind(this);
@@ -64,6 +68,7 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
 
   public render() {
     const {
+      exerciseEditMode,
       inputExercise,
       isExerciseDialogOpened,
       onExerciseDialogClose,
@@ -118,41 +123,12 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
               <DialogContentText>
                 Please provide detail for adding exercise.
               </DialogContentText>
-              <TextField
-                id="exercise-title"
-                name="title"
-                label="Exercise Title"
-                onChange={onExerciseFormFieldChange}
-                value={inputExercise.title}
-                margin="normal"
-                style={this.style.w100}
+              <ExerciseForm
+                getMusclesMenuItems={this.getMusclesMenuItems}
+                inputExercise={inputExercise}
+                style={this.style}
+                onExerciseFormFieldChange={onExerciseFormFieldChange}
               />
-              <br />
-              <TextField
-                id="exercise-description"
-                name="description"
-                label="Multiline"
-                multiline={true}
-                onChange={onExerciseFormFieldChange}
-                rowsMax="4"
-                value={inputExercise.description}
-                margin="normal"
-                style={this.style.w100}
-              />
-              <br />
-              <FormControl style={this.style.w100}>
-                <InputLabel htmlFor="exercise-muscle">Muscles</InputLabel>
-                <Select
-                  value={inputExercise.muscles}
-                  onChange={onExerciseFormFieldChange}
-                  inputProps={{
-                    id: 'exercise-muscle',
-                    name: 'muscles'
-                  }}
-                >
-                  {this.getMusclesMenuItems()}
-                </Select>
-              </FormControl>
             </DialogContent>
             <DialogActions>
               <Button color="primary" onClick={onExerciseDialogClose}>
@@ -167,21 +143,27 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
 
         <section id="body">
           <Grid container={true}>
-            <Grid item={true} sm={6}>
+            <Grid item={true} sm={6} xs={12}>
               <Paper style={this.style.paper}>
                 {this.getMuscleAndExerciseList()}
               </Paper>
             </Grid>
-            <Grid item={true} sm={6}>
+            <Grid item={true} sm={6} xs={12}>
               <Paper style={this.style.paper}>
-                <Typography variant="h4" gutterBottom={true}>
-                  {selectedExercise ? selectedExercise.title : 'Welcome'}
-                </Typography>
-                <Typography variant="subtitle1" gutterBottom={true}>
-                  {selectedExercise
-                    ? selectedExercise.description
-                    : 'Please select any exercise.'}
-                </Typography>
+                {exerciseEditMode ? (
+                  this.getExerciseEditForm()
+                ) : (
+                  <React.Fragment>
+                    <Typography variant="h4" gutterBottom={true}>
+                      {selectedExercise ? selectedExercise.title : 'Welcome'}
+                    </Typography>
+                    <Typography variant="subtitle1" gutterBottom={true}>
+                      {selectedExercise
+                        ? selectedExercise.description
+                        : 'Please select any exercise.'}
+                    </Typography>
+                  </React.Fragment>
+                )}
               </Paper>
             </Grid>
           </Grid>
@@ -193,8 +175,9 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
               value={this.props.selectedTab}
               indicatorColor="primary"
               textColor="primary"
-              centered={true}
               onChange={this.props.onTabChange}
+              variant="scrollable"
+              scrollButtons="on"
             >
               <Tab label={'All'} />
               {this.getMusclesTabs()}
@@ -214,6 +197,20 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
           onClick={this.props.onListClick(exercise.id)}
         >
           <ListItemText primary={exercise.title} />
+          <ListItemSecondaryAction>
+            <IconButton
+              aria-label="Delete"
+              onClick={this.props.onDeleteExercise(exercise.id)}
+            >
+              <DeleteIcon />
+            </IconButton>
+            <IconButton
+              aria-label="Create"
+              onClick={this.props.onEditExercise(exercise.id)}
+            >
+              <CreateIcon />
+            </IconButton>
+          </ListItemSecondaryAction>
         </ListItem>
       ));
     }
@@ -231,6 +228,29 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
         return accumulator;
       },
       {}
+    );
+  }
+
+  private getExerciseEditForm() {
+    const {
+      inputExercise,
+      onExerciseFormFieldChange,
+      onSaveExercise
+    } = this.props;
+    return (
+      <React.Fragment>
+        <ExerciseForm
+          getMusclesMenuItems={this.getMusclesMenuItems}
+          inputExercise={inputExercise}
+          style={this.style}
+          onExerciseFormFieldChange={onExerciseFormFieldChange}
+        />
+        <br />
+        <br />
+        <Button variant="contained" color="primary" onClick={onSaveExercise()}>
+          Edit Exercise
+        </Button>
+      </React.Fragment>
     );
   }
 
@@ -254,7 +274,6 @@ class MuiView extends React.Component<IMuiViewProps, IMuiViewState> {
         <List component="nav">{this.getExerciseAsList(muscle)}</List>
       </React.Fragment>
     ));
-    console.log(mappedResult);
     return mappedResult;
   }
 

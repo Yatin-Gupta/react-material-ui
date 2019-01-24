@@ -2,6 +2,7 @@ import * as React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import './App.css';
 // import components to route
+import TestComponent from './components/email/TestComponent';
 import ParentComponent from './components/hoc/ParentComponent';
 import Index from './components/jss/index';
 import LocaleProvider from './components/local/LocaleProvider';
@@ -18,6 +19,7 @@ class App extends React.Component {
           <Route component={MuiContainer} path="/mui" />
           <Route component={ParentComponent} path="/pc" />
           <Route component={Index} path="/jssindex" />
+          <Route component={TestComponent} path="/testemail" />
         </Switch>
       </Router>
     );
